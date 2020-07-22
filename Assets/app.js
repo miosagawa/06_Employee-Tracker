@@ -15,70 +15,80 @@ var connection = mysql.createConnection({
 });
 
 // connect to the mysql server and sql database
-// mysqlサーバーとsqlデータベースに接続する
 connection.connect(function(err) {
     if (err) throw err;
     start();
   });
 
-// 1.何を表示しますか？
+// 1.What would you like to do？
 function start() {
     inquirer
       .prompt({
         name: "view",
         type: "list",
-        message: "Would you like to do?",
-        choices: ["view all employees", 
-                  "view all employees by Deprtment", 
+        message: "What would you like to do?",
+        choices: ["view all employees",
+                  "view all department",
+                  "view all role",
+                  "view all employees by role", 
                   "view all employees by Manager",
                   "Add employees",
                   "Remove employees",
                   "Update employees role",
-                  "Update employees Manager"
+                  "Update employees Manager",
+                  "View the total utilized budget of a departmen"
 
                 ]
       })
 
       .then(function(answer) {
        
-        // 1.すべての従業員を表示する
+        // (1).view all employees
         if (answer.view === "view all employees") {
             viewEmployees();
         }
-        // 2.すべての従業員を部門別に表示する
-        else if(answer.view === "view all employees by Deprtment") {
-            viewDeprtment();
+        else if(answer.view === "view all department") {
+            viewDepartment();
         }
-        // 3.すべての従業員をマネージャー別に表示
+        else if(answer.view === "view all role") {
+            viewRole();
+        }
+
+        // (2).view all employees by role
+        else if(answer.view === "view all employees by role") {
+            viewEmployeesRole();
+        }
+        // (3).view all employees by Manager
         else if(answer.view === "view all employees by Manager") {
-            viewManager();
+            viewEmployeesManager();
         }
-
-
-        // 4.従業員を追加
+        // (4).Add employees
         else if(answer.view === "Add employees") {
             Addemployees();
         }
-        // 5.従業員を削除
+        // (5).Remove employees
         else if(answer.view === "Remove employees") {
             Removeemployees();
         }
-        // 6.従業員の役割を更新する
+        // (6).Update employees role
         else if(answer.view === "Update employees role") {
             UpEmployeesRole();
         }
-        // 7.従業員マネージャーの更新
+        // (7).Update employees Manager
         else if(answer.view === "Update employees Manager") {
             UpEmployeesManager();
-        }  
-        // 8.それ以外
+        }
+        // (8).View the total utilized budget of a departmen
+        else if(answer.view === "View the total utilized budget of a departmen") {
+            viewBudget();
+      }  
         else{
           connection.end();
         }
       });
   }
 
-//1.全ての従業員を表示する(部署と役割と名前)
+//(1).view all employees
 function viewEmployees() {
     console.log("Selecting all products...\n");
     connection.query("SELECT * FROM employee", function(err, res) {
@@ -87,63 +97,121 @@ function viewEmployees() {
       connection.end();
     });
 }
+function viewDepartment() {
+  console.log("Selecting all products...\n");
+  connection.query("SELECT * FROM department", function(err, res) {
+    if (err) throw err;
+    console.log(res);
+    connection.end();
+  });
+}
+function viewRole() {
+  console.log("Selecting all products...\n");
+  connection.query("SELECT * FROM role", function(err, res) {
+    if (err) throw err;
+    console.log(res);
+    connection.end();
+  });
+}
 
-// 2.すべての従業員を部門別に表示する
-function viewDeprtment() {
+// (2).view all employees by role
+function viewEmployeesRole() {
     console.log("Selecting all products...\n");
-    connection.query("SELECT * FROM employee　order by manager_id", function(err, res) {
+    connection.query("SELECT role_id, first_name, last_name FROM employee ORDER BY role_id", function(err, res) {
       if (err) throw err;
       console.log(res);
       connection.end();
     });
 }
 
+// (3).view all employees by Manager
+function viewEmployeesManager() {
+  console.log("Selecting all products...\n");
+  connection.query("SELECT Manager_id, first_name, last_name FROM employee ORDER BY Manager_id", function(err, res) {
+    if (err) throw err;
+    console.log(res);
+    connection.end();
+  });
+}
 
-//5-1.削除する(部署と役割と名前)
+// (4).Add employees
+function Addemployees() {
+  inquirer
+    .prompt([
+      {
+        name: "first_name",
+        type: "input",
+        message: "What is the first name of the employee you want to add?"
+      },
+      {
+        name: "last_name",
+        type: "input",
+        message: "What is the last name of the employee you want to add?"
+      },
+      {
+          name: "add_role",
+          type: "list",
+          message: "Which role of employee do you want to add?",
+          choices: 
+                  //  ["Lead Engineer", 
+                  //   "Software Engineer", 
+                  //   "Account Manager",
+                  //   "Account"
+                  //  ]
+                  [1,2,3,4,5,6]
+        },
+        {
+          name: "add_Manager",
+          type: "list",
+          message: "Who is the manager of the employee you want to add?",
+          choices: 
+                  //  ["John Doe", 
+                  //   "Mike Chan", 
+                  //   "Sarah Lourd"
+                  //  ]
+                   [1,2,3,4,5,6]
+         } 
+    ])
+    .then(function(answer) 
+    {
+      connection.query
+      (
+        "INSERT INTO employee SET ?",
+        {
+          first_name: answer.first_name,
+          last_name: answer.last_name,
+          role_id: answer.add_role,
+          manager_id: answer.add_Manager,
+        },
+        function(err) 
+        {
+          if (err) throw err;
+          console.log("Your auction was created successfully!");
+          start();
+          
+        } 
+      );
+    });
+}
+
+
+//(5).Remove employees
 function Removeemployees() {
     inquirer
       .prompt([
         {
-          name: "first_name",
+          name: "id",
           type: "input",
-          message: "What is the first name of the employee you want to delete?"
-        },
-        {
-          name: "last_name",
-          type: "input",
-          message: "What is the last name of the employee you want to delete?"
-        },
-        {
-          name: "delete_role",
-          type: "list",
-          message: "Which role of employee do you want to delete?",
-          choices: ["Lead Engineer", 
-                    "Software Engineer", 
-                    "Account Manager",
-                    "Account"
-                ]
-        },
-        {
-          name: "delete_Manager",
-          type: "list",
-          message: "Who is the manager of the employee you want to delete?",
-          choices: ["John Doe", 
-                    "Mike Chan", 
-                    "Sarah Lourd"
-                ]
+          message: "What is id of the employee you want to delete?"
         }
       ])
-
       .then(function(answer) 
       {
         connection.query
         (
-          "DELETE FROM employee WHERE where_condition",
+          "DELETE FROM employee WHERE ?",
           {
-            first_name: answer.first_name,
-            last_name: answer.last_name,
-            role_id: answer.delete_role,
-            manager_id: answer.delete_Manager,
+            id: answer.id,
           },
           function(err) 
           {
@@ -155,86 +223,35 @@ function Removeemployees() {
       });
   }
 
+// (6).Update employees role(Right to left)
+function UpEmployeesRole() {
+  console.log("Selecting all products...\n");
+  connection.query("UPDATE employee SET role_id = 1 WHERE role_id= 2", function(err, res) {
+    if (err) throw err;
+    console.log(res);
+    connection.end();
+  });
+}
 
-// Add departments, roles, employees
-//4-1.追加する(部署と役割と名前)
-  function Addemployees() {
-    inquirer
-      .prompt([
-        {
-          name: "first_name",
-          type: "input",
-          message: "What is the first name of the employee you want to add?"
-        },
-        {
-          name: "last_name",
-          type: "input",
-          message: "What is the last name of the employee you want to add?"
-        },
-        {
-            name: "add_role",
-            type: "list",
-            message: "Which role of employee do you want to add?",
-            choices: 
-                    //  ["Lead Engineer", 
-                    //   "Software Engineer", 
-                    //   "Account Manager",
-                    //   "Account"
-                    //  ]
-                    [1,2,3,4,5,6]
-          },
-          {
-            name: "add_Manager",
-            type: "list",
-            message: "Who is the manager of the employee you want to add?",
-            choices: 
-                    //  ["John Doe", 
-                    //   "Mike Chan", 
-                    //   "Sarah Lourd"
-                    //  ]
-                     [1,2,3,4,5,6]
-        }
-      ])
+// (7).Update employees Manager(Right to left)
+function UpEmployeesManager() {
+  console.log("Selecting all products...\n");
+  connection.query("UPDATE employee SET Manager_id = 3 WHERE Manager_id = 5 ", function(err, res) {
+    if (err) throw err;
+    console.log(res);
+    connection.end();
+  });
+}
 
-      .then(function(answer) 
-      {
-        connection.query
-        (
-          "INSERT INTO employee SET ?",
-          {
-            first_name: answer.first_name,
-            last_name: answer.last_name,
-            role_id: answer.add_role,
-            manager_id: answer.add_Manager,
-          },
-          function(err) 
-          {
-            if (err) throw err;
-            console.log("Your auction was created successfully!");
-            start();
-            
-          } 
-        );
-      });
-  }
-
-
-
-
-
-
-
-// 6.従業員の役割を更新する
-// function UpEmployeesRole() {
-// connection.connect(function(err) {
-//     if (err) throw err;
-//     var sql = "UPDATE employee SET role_id = 1 WHERE role_id = 6 ";
-//     connection.query(sql, function (err, result) {
-//       if (err) throw err;
-//       console.log(" record(s) updated");
-//     });
-//   });
-// }
+// (8).View the total utilized budget of a departmen
+function viewBudget() {
+  console.log("Selecting all products...\n");
+  connection.query("SELECT department_id, sum(salary) as total_salary FROM role group BY department_id", function(err, res) {
+    if (err) throw err;
+    console.log(res);
+    connection.end();
+  });
+}
 
 
 
